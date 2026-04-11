@@ -1,25 +1,31 @@
-# root
+# OS
 .DS_Store
 Thumbs.db
-
-# backend
-backend/target/
-backend/.idea/
-backend/*.iml
-
-# frontend
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-
-# env
-.env
-.env.*
 
 # IDE / tools
 .vscode/
 .idea/
+*.iml
 .claude/
 
 # docs
 ROADMAP.md
+
+# ── Backend ──────────────────────────────────────────────
+backend/target/
+backend/run.log
+backend/src/main/resources/application.yml
+backend/src/main/resources/application-*.yml
+
+# ── Frontend ─────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ── Env ──────────────────────────────────────────────────
+.env
+.env.*
