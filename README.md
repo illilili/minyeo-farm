@@ -1,25 +1,14 @@
-# Minyeo Farm MVP
+# 미녀농장
 
-Monorepo for Minyeo Farm online store.
+무화과·고구마 등 제철 농산물을 산지에서 바로 보내드리는 소규모 직거래 쇼핑몰입니다.
 
-## Structure
+## 기술 스택
 
-- `backend`: Spring Boot API server (Java 17, Spring Security, JPA, MySQL, JWT, Toss skeleton, Naver OAuth skeleton)
-- `frontend`: Next.js App Router (TypeScript) client
-
-## Run (Local)
-
-### Backend
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
+| 구분 | 사용 기술 |
+|------|-----------|
+| **프론트엔드** | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
+| **백엔드** | Spring Boot 3, Java 17, Spring Security, JPA (Hibernate), MySQL |
+| **인증** | Naver OAuth 2.0, JWT |
+| **결제** | Toss Payments |
+| **스토리지** | AWS S3 |
+| **에디터** | TipTap |

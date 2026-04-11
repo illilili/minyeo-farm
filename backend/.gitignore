@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+run.log
+
+# Local secrets/config
+src/main/resources/application.yml
+src/main/resources/application-*.yml
+.env
+.env.*

@@ -1,0 +1,14 @@
+package com.minyeo.farm.auth;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "app.naver")
+public class NaverOAuthProperties {
+    private String clientId;
+    private String clientSecret;
+    private String redirectUri;
+}

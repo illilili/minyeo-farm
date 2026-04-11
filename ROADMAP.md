@@ -1,55 +1,50 @@
-# Minyeo Farm MVP 작업 플랜
+# 미녀농장 작업 로드맵
 
-## 1단계: Auth + 상품조회
-- 백엔드
-  - Naver OAuth 로그인 URL/콜백
-  - JWT 발급 및 `/api/me`
-  - 상품 목록/상세/후기조회, 소식 목록/상세
-- 프론트
-  - 상품 목록/상세, 소식 목록/상세, 정책 페이지
-- 테스트 단위
-  - `GET /api/products`
-  - `GET /api/products/{id}`
-  - `GET /api/auth/naver/login`
-  - `GET /api/me` (JWT 포함)
+## 완료
 
-## 2단계: 주문 + 결제
-- 백엔드
-  - 주문 생성(PENDING), 회원/비회원 조회
-  - Toss ready/confirm/webhook(idempotent)
-  - 금액 검증(amount == order.totalAmount)
-  - PENDING 2시간 자동 정리 스케줄러
-- 프론트
-  - 주문 작성/결제 흐름 화면
-  - 결제 실패 페이지
-- 테스트 단위
-  - `POST /api/orders`
-  - `POST /api/payments/toss/ready`
-  - `POST /api/payments/toss/confirm`
-  - `POST /api/payments/toss/webhook`
+### 1단계: Auth + 상품조회
+- Naver OAuth 로그인, JWT 발급, `/api/me`
+- 상품 목록/상세/후기조회, 소식 목록/상세
+- 프론트 상품·소식·정책 페이지
 
-## 3단계: 관리자 주문/엑셀
-- 백엔드
-  - 관리자 주문 목록/상세
-  - 상태 변경/송장 입력
-  - 다운로드 엔드포인트(현재 CSV 스켈레톤, 이후 xlsx 전환)
-- 프론트
-  - 관리자 주문 목록 화면
-- 테스트 단위
-  - `GET /api/admin/orders`
-  - `PATCH /api/admin/orders/{id}/status`
-  - `PATCH /api/admin/orders/{id}/tracking`
-  - `GET /api/admin/orders/export/xlsx`
+### 2단계: 주문 + 결제
+- 주문 생성(PENDING), 회원/비회원 조회
+- Toss ready/confirm/webhook(idempotent), 금액 검증
+- PENDING 2시간 자동 정리 스케줄러
+- 주문 작성·결제·성공·실패 화면
 
-## 4단계: 후기
-- 백엔드
-  - 작성 가능 여부 조회
-  - 후기 작성(배송완료 + order_item 1회)
-  - 관리자 숨김/삭제
-- 프론트
-  - 상품상세 후기 표시
-  - 마이페이지 후기 작성 진입점
-- 테스트 단위
-  - `GET /api/my/reviews/writable`
-  - `POST /api/reviews`
-  - `PATCH /api/admin/reviews/{id}/hide`
+### 3단계: 관리자
+- 관리자 대시보드 (오늘 주문, 처리 필요 배너, 최근 주문)
+- 주문 목록·상태 변경·송장 입력
+- 상품 등록·수정·품절 처리, 홈 대표상품 3개 지정
+- 소식 등록·수정·삭제
+
+### 4단계: 후기
+- 배송완료 상품에 한해 후기 작성 (1회 제한)
+- 관리자 후기 숨김/삭제
+
+### 5단계: UI/UX 개선
+- 전체 페이지 농장 테마 디자인 (Tailwind CSS v4, CSS 변수)
+- TipTap 리치에디터 (이미지 업로드·크기 조절, 텍스트 정렬)
+- 반응형 레이아웃, 모바일 메뉴
+- 비회원 주문 PIN 인증 (BCrypt 해시 저장)
+
+---
+
+## 예정
+
+### 보안 강화
+- [ ] Toss 웹훅 HMAC 서명 검증 (라이브 배포 전 필수)
+- [ ] 이미지 업로드 MIME 타입 / 파일 크기 검증
+- [ ] 관리자 미디어 업로드 엔드포인트 인증 추가
+- [ ] 페이지네이션 size 상한선 제한 (`@Max(100)`)
+
+### 기능 추가
+- [ ] 주문 상태 변경 시 알림톡(카카오) 발송
+- [ ] 관리자 주문 엑셀(xlsx) 다운로드
+- [ ] 상품 재고 수량 관리
+- [ ] 배송 조회 연동 (운송장 번호로 택배사 API 연결)
+
+### 성능 개선
+- [ ] 관리자 주문 목록 N+1 쿼리 → JOIN FETCH
+- [ ] 후기 작성 가능 여부 조회 O(n) → DB 쿼리

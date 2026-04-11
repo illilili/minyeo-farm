@@ -15,3 +15,11 @@ frontend/out/
 # env
 .env
 .env.*
+
+# IDE / tools
+.vscode/
+.idea/
+.claude/
+
+# docs
+ROADMAP.md
