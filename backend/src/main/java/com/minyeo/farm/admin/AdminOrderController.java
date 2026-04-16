@@ -66,6 +66,10 @@ public class AdminOrderController {
     public AdminOrderDetailResponse patchStatus(@PathVariable Long id, @Valid @RequestBody AdminOrderStatusPatchRequest request) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "주문을 찾을 수 없습니다."));
+        if (request.getOrderStatus() == OrderStatus.CANCELED) {
+            throw new AppException(ErrorCode.INVALID_INPUT,
+                    "주문 취소는 환불 API를 사용해 주세요.");
+        }
         if (!order.getOrderStatus().canTransitionTo(request.getOrderStatus())) {
             throw new AppException(ErrorCode.INVALID_INPUT,
                     order.getOrderStatus() + " → " + request.getOrderStatus() + " 상태 변경은 허용되지 않습니다.");

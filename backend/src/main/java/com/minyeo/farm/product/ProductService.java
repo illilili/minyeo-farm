@@ -30,6 +30,9 @@ public class ProductService {
         if (status == null) {
             return productRepository.findByStatusNot(ProductStatus.HIDDEN, pageable).map(ProductListResponse::from);
         }
+        if (status == ProductStatus.HIDDEN) {
+            throw new AppException(ErrorCode.INVALID_INPUT, "허용되지 않는 상태 조건입니다.");
+        }
         return productRepository.findByStatus(status, pageable).map(ProductListResponse::from);
     }
 
@@ -43,6 +46,9 @@ public class ProductService {
     public ProductDetailResponse getProductDetail(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        if (product.getStatus() == ProductStatus.HIDDEN) {
+            throw new AppException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
         return ProductDetailResponse.from(product);
     }
 
