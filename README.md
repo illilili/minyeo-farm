@@ -10,5 +10,6 @@
 | **백엔드** | Spring Boot 3, Java 17, Spring Security, JPA (Hibernate), MySQL |
 | **인증** | Naver OAuth 2.0, JWT |
 | **결제** | Toss Payments |
-| **스토리지** | AWS S3 |
+| **스토리지** | Cloudflare R2 |
+| **배포** | Vercel (프론트), Railway (백엔드) |
 | **에디터** | TipTap |

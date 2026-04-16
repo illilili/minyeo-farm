@@ -1,0 +1,39 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  jackson:
+    time-zone: Asia/Seoul
+
+app:
+  admin:
+    naver-provider-user-id: ${ADMIN_NAVER_ID:0ChRYUhw-6vO2nQKjgAuls8f0tb-hzxGRVb9Z0w7TmE}
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expire-seconds: 86400
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
+    redirect-uri: ${NAVER_REDIRECT_URI}
+  scheduler:
+    pending-order-cleanup-enabled: true
+  toss:
+    secret-key: ${TOSS_SECRET_KEY}
+    confirm-url: https://api.tosspayments.com/v1/payments/confirm
+    cancel-url-template: https://api.tosspayments.com/v1/payments/%s/cancel
+  s3:
+    region: auto
+    bucket: ${R2_BUCKET:minyeo-farm}
+    access-key: ${R2_ACCESS_KEY}
+    secret-key: ${R2_SECRET_KEY}
+    endpoint: ${R2_ENDPOINT}
+    public-url: ${R2_PUBLIC_URL}
