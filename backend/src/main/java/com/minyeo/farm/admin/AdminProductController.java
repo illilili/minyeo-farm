@@ -65,6 +65,20 @@ public class AdminProductController {
         return ProductDetailResponse.from(productRepository.save(product));
     }
 
+    @PatchMapping("/{id}/featured")
+    public ProductDetailResponse toggleFeatured(@PathVariable Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        if (!product.isFeatured()) {
+            long count = productRepository.findByFeaturedTrueAndStatusOrderByUpdatedAtDesc(ProductStatus.ON_SALE).size();
+            if (count >= 3) {
+                throw new AppException(ErrorCode.INVALID_INPUT, "홈 표시 상품은 최대 3개까지 선택할 수 있습니다.");
+            }
+        }
+        product.setFeatured(!product.isFeatured());
+        return ProductDetailResponse.from(productRepository.save(product));
+    }
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         Product product = productRepository.findById(id)

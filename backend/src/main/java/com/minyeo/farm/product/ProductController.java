@@ -4,6 +4,7 @@ import com.minyeo.farm.domain.product.ProductStatus;
 import com.minyeo.farm.product.dto.ProductDetailResponse;
 import com.minyeo.farm.product.dto.ProductListResponse;
 import com.minyeo.farm.review.dto.ReviewResponse;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,11 @@ public class ProductController {
                 ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortSpec[0]));
         return productService.getProducts(status, pageable);
+    }
+
+    @GetMapping("/featured")
+    public List<ProductListResponse> featured() {
+        return productService.getFeaturedProducts();
     }
 
     @GetMapping("/{id}")

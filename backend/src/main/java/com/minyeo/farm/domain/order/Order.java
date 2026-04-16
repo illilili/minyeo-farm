@@ -83,11 +83,20 @@ public class Order extends BaseTimeEntity {
     @Column(name = "order_pin", length = 100)
     private String orderPin;
 
+    @Column(name = "agree_terms", nullable = false)
+    private boolean agreeTerms;
+    @Column(name = "agree_privacy", nullable = false)
+    private boolean agreePrivacy;
+    @Column(name = "agree_cancel_policy", nullable = false)
+    private boolean agreeCancelPolicy;
+    @Column(name = "agreed_at")
+    private LocalDateTime agreedAt;
+
     @Builder
     public Order(String orderNo, User user, boolean guest, OrderStatus orderStatus, String buyerName, String buyerPhone,
                  String buyerEmail, String receiverName, String receiverPhone, String receiverZipcode, String receiverAddress1,
                  String receiverAddress2, String deliveryRequest, Integer subtotalAmount, Integer shippingFee, Integer totalAmount,
-                 String orderPin) {
+                 String orderPin, boolean agreeTerms, boolean agreePrivacy, boolean agreeCancelPolicy, LocalDateTime agreedAt) {
         this.orderNo = orderNo;
         this.user = user;
         this.guest = guest;
@@ -105,6 +114,10 @@ public class Order extends BaseTimeEntity {
         this.shippingFee = shippingFee;
         this.totalAmount = totalAmount;
         this.orderPin = orderPin;
+        this.agreeTerms = agreeTerms;
+        this.agreePrivacy = agreePrivacy;
+        this.agreeCancelPolicy = agreeCancelPolicy;
+        this.agreedAt = agreedAt;
     }
 
     public void markPaid(LocalDateTime paidAt) {

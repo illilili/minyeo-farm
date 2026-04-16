@@ -66,6 +66,10 @@ public class AdminOrderController {
     public AdminOrderDetailResponse patchStatus(@PathVariable Long id, @Valid @RequestBody AdminOrderStatusPatchRequest request) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "주문을 찾을 수 없습니다."));
+        if (!order.getOrderStatus().canTransitionTo(request.getOrderStatus())) {
+            throw new AppException(ErrorCode.INVALID_INPUT,
+                    order.getOrderStatus() + " → " + request.getOrderStatus() + " 상태 변경은 허용되지 않습니다.");
+        }
         order.updateStatus(request.getOrderStatus());
         Order updated = orderRepository.save(order);
         return AdminOrderDetailResponse.from(updated, orderItemRepository.findByOrderId(updated.getId()));
@@ -100,9 +104,8 @@ public class AdminOrderController {
         return AdminOrderDetailResponse.from(updated, orderItemRepository.findByOrderId(updated.getId()));
     }
 
-    @GetMapping("/export/xlsx")
-    public ResponseEntity<byte[]> exportXlsx() {
-        // MVP skeleton: 실제 xlsx 대신 CSV 바이트 반환. Apache POI로 대체 예정.
+    @GetMapping("/export/csv")
+    public ResponseEntity<byte[]> exportCsv() {
         String content = "orderNo,status,totalAmount\n" + orderRepository.findAll().stream()
                 .map(o -> o.getOrderNo() + "," + o.getOrderStatus() + "," + o.getTotalAmount())
                 .reduce("", (a, b) -> a + b + "\n");

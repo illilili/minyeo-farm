@@ -42,6 +42,10 @@ public class OrderCreateRequest {
     private String receiverAddress2;
     private String deliveryRequest;
 
+    private boolean agreeTerms;
+    private boolean agreePrivacy;
+    private boolean agreeCancelPolicy;
+
     @Valid
     @NotEmpty
     private List<Item> items;

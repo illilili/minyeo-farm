@@ -40,6 +40,9 @@ public class Product extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private boolean featured;
+
     @Builder
     public Product(String name, Integer price, ProductStatus status, String thumbnailUrl, String description) {
         this.name = name;
@@ -55,5 +58,9 @@ public class Product extends BaseTimeEntity {
         this.status = status;
         this.thumbnailUrl = thumbnailUrl;
         this.description = description;
+    }
+
+    public void setFeatured(boolean featured) {
+        this.featured = featured;
     }
 }

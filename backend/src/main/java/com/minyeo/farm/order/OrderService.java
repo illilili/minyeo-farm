@@ -9,6 +9,7 @@ import com.minyeo.farm.domain.order.OrderRepository;
 import com.minyeo.farm.domain.order.OrderStatus;
 import com.minyeo.farm.domain.product.Product;
 import com.minyeo.farm.domain.product.ProductRepository;
+import com.minyeo.farm.domain.product.ProductStatus;
 import com.minyeo.farm.domain.review.ReviewRepository;
 import com.minyeo.farm.domain.user.User;
 import com.minyeo.farm.domain.user.UserRepository;
@@ -73,6 +74,10 @@ public class OrderService {
         for (OrderCreateRequest.Item item : request.getItems()) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+            if (product.getStatus() != ProductStatus.ON_SALE) {
+                throw new AppException(ErrorCode.INVALID_INPUT,
+                        "현재 주문할 수 없는 상품입니다: " + product.getName());
+            }
             subtotal += product.getPrice() * item.getQuantity();
         }
         int shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
@@ -89,6 +94,10 @@ public class OrderService {
                 throw new AppException(ErrorCode.INVALID_INPUT, "PIN은 숫자 4자리여야 합니다.");
             }
             hashedPin = passwordEncoder.encode(rawPin);
+        }
+
+        if (!request.isAgreeTerms() || !request.isAgreePrivacy() || !request.isAgreeCancelPolicy()) {
+            throw new AppException(ErrorCode.INVALID_INPUT, "이용약관, 개인정보 수집·이용, 환불 정책에 모두 동의해야 합니다.");
         }
 
         Order order = orderRepository.save(Order.builder()
@@ -109,6 +118,10 @@ public class OrderService {
                 .shippingFee(shippingFee)
                 .totalAmount(total)
                 .orderPin(hashedPin)
+                .agreeTerms(true)
+                .agreePrivacy(true)
+                .agreeCancelPolicy(true)
+                .agreedAt(LocalDateTime.now())
                 .build());
 
         for (OrderCreateRequest.Item item : request.getItems()) {

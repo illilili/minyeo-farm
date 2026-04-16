@@ -14,6 +14,7 @@ public class ProductDetailResponse {
     private ProductStatus status;
     private String thumbnailUrl;
     private String description;
+    private boolean featured;
 
     public static ProductDetailResponse from(Product product) {
         return ProductDetailResponse.builder()
@@ -23,6 +24,7 @@ public class ProductDetailResponse {
                 .status(product.getStatus())
                 .thumbnailUrl(product.getThumbnailUrl())
                 .description(product.getDescription())
+                .featured(product.isFeatured())
                 .build();
     }
 }

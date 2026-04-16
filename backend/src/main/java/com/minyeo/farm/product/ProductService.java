@@ -34,6 +34,12 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public java.util.List<ProductListResponse> getFeaturedProducts() {
+        return productRepository.findByFeaturedTrueAndStatusOrderByUpdatedAtDesc(ProductStatus.ON_SALE)
+                .stream().map(ProductListResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
     public ProductDetailResponse getProductDetail(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
