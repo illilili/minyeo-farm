@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
@@ -103,7 +103,7 @@ const initialForm: OrdererForm = {
   deliveryRequest: ""
 };
 
-export default function OrderPage() {
+function OrderContent() {
   const searchParams = useSearchParams();
   const productIdFromQuery = searchParams.get("productId");
   const quantityFromQuery = searchParams.get("quantity");
@@ -116,6 +116,8 @@ export default function OrderPage() {
   const [quantity, setQuantity] = useState<number>(1);
   const [form, setForm] = useState<OrdererForm>(initialForm);
   const [sameAsOrderer, setSameAsOrderer] = useState(true);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeCancelPolicy, setAgreeCancelPolicy] = useState(false);
   const [error, setError] = useState<string>("");
   const [isPaying, setIsPaying] = useState(false);
@@ -156,18 +158,34 @@ export default function OrderPage() {
   }, [quantityFromQuery]);
 
   useEffect(() => {
-    apiGet<ProductPage>("/api/products?status=ON_SALE&page=0&size=20&sort=createdAt,DESC")
-      .then((data) => {
-        setProducts(data.content);
-        if (data.content.length > 0) {
-          const queryId = Number(productIdFromQuery);
-          const exists = data.content.some((p) => p.id === queryId);
-          if (isDirectOrderFromProduct && !exists) { setError("선택한 상품 정보를 찾을 수 없습니다."); return; }
-          setSelectedProductId(exists ? queryId : data.content[0].id);
+    async function loadProducts() {
+      try {
+        // 직접 주문: 해당 상품만 조회
+        if (isDirectOrderFromProduct) {
+          const p = await apiGet<Product>(`/api/products/${productIdFromQuery}`);
+          if (p.status !== "ON_SALE") { setError("현재 주문할 수 없는 상품입니다."); return; }
+          setProducts([p]);
+          setSelectedProductId(p.id);
+          return;
         }
-      })
-      .catch((e: Error) => setError(e.message || "상품을 불러오지 못했습니다."));
-  }, [isDirectOrderFromProduct, productIdFromQuery]);
+        // 장바구니 주문: 필요한 상품만 개별 조회
+        if (fromCart && checkoutDraft.length > 0) {
+          const fetched = await Promise.all(
+            checkoutDraft.map((item) => apiGet<Product>(`/api/products/${item.productId}`))
+          );
+          setProducts(fetched);
+          return;
+        }
+        // 일반 주문 폼: 목록에서 선택
+        const data = await apiGet<ProductPage>("/api/products?status=ON_SALE&page=0&size=100&sort=createdAt,DESC");
+        setProducts(data.content);
+        if (data.content.length > 0) setSelectedProductId(data.content[0].id);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "상품을 불러오지 못했습니다.");
+      }
+    }
+    loadProducts();
+  }, [isDirectOrderFromProduct, productIdFromQuery, fromCart, checkoutDraft]);
 
   const selectedProduct = useMemo(() => products.find((p) => p.id === selectedProductId), [products, selectedProductId]);
 
@@ -208,18 +226,16 @@ export default function OrderPage() {
     e.preventDefault();
     if (!fromCart && !selectedProductId) { setError("주문할 상품을 선택해주세요."); return; }
     if (fromCart && checkoutDraft.length === 0) { setError("장바구니에서 주문할 상품을 선택해주세요."); return; }
-    if (!agreeCancelPolicy) { setError("주문 준비 이후 환불 제한 정책에 동의해주세요."); return; }
+    if (!agreeTerms || !agreePrivacy || !agreeCancelPolicy) { setError("이용약관, 개인정보 수집·이용, 환불 정책에 모두 동의해주세요."); return; }
     const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
     if (!tossClientKey) { setError("NEXT_PUBLIC_TOSS_CLIENT_KEY 환경변수가 필요합니다."); return; }
     if (!window.TossPayments) { setError("토스 결제 스크립트를 불러오지 못했습니다."); return; }
     setIsPaying(true); setError("");
     try {
-      const created = await apiPost<OrderResponse>("/api/orders", { ...form, items: fromCart ? checkoutDraft : [{ productId: selectedProductId, quantity }] });
+      const created = await apiPost<OrderResponse>("/api/orders", { ...form, agreeTerms, agreePrivacy, agreeCancelPolicy, items: fromCart ? checkoutDraft : [{ productId: selectedProductId, quantity }] });
       if (fromCart) {
-        const hasToken = !!localStorage.getItem("accessToken");
-        if (hasToken) await Promise.all(checkoutDraft.map((item) => apiDelete(`/api/my/cart/${item.productId}`)));
-        else checkoutDraft.forEach((item) => removeGuestCartItem(item.productId));
-        sessionStorage.removeItem("checkoutDraft");
+        // 결제 성공 후 장바구니 삭제를 위해 sessionStorage에 보관
+        sessionStorage.setItem("pendingCartClear", JSON.stringify(checkoutDraft));
       }
       const ready = await apiPost<PaymentReadyResponse>("/api/payments/toss/ready", { orderId: created.id });
       const tossPayments = window.TossPayments(tossClientKey);
@@ -386,13 +402,26 @@ export default function OrderPage() {
             </div>
           </div>
 
-          {/* 동의 + 결제 버튼은 요약 카드 아래 모바일에서 보임 — 실제 submit은 여기 */}
-          <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-[var(--farm-line)] bg-[var(--farm-surface)] p-4">
-            <input type="checkbox" checked={agreeCancelPolicy} onChange={(e) => setAgreeCancelPolicy(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--farm-olive)] shrink-0" />
-            <span className="text-xs text-[var(--farm-muted)] leading-relaxed">
-              주문 준비중 이후 환불은 자동 처리되지 않으며, 환불 규정에 따라 고객센터 문의 후 수동 처리됩니다.
-            </span>
-          </label>
+          {/* 약관 동의 */}
+          <div className="rounded-xl border border-[var(--farm-line)] bg-[var(--farm-surface)] p-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={agreeTerms && agreePrivacy && agreeCancelPolicy} onChange={(e) => { setAgreeTerms(e.target.checked); setAgreePrivacy(e.target.checked); setAgreeCancelPolicy(e.target.checked); }} className="mt-0.5 w-4 h-4 accent-[var(--farm-olive)] shrink-0" />
+              <span className="text-sm font-medium text-[var(--farm-text)]">전체 동의</span>
+            </label>
+            <Separator className="bg-[var(--farm-line)]" />
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--farm-olive)] shrink-0" />
+              <span className="text-xs text-[var(--farm-muted)] leading-relaxed">[필수] 이용약관 동의</span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--farm-olive)] shrink-0" />
+              <span className="text-xs text-[var(--farm-muted)] leading-relaxed">[필수] 개인정보 수집·이용 동의</span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={agreeCancelPolicy} onChange={(e) => setAgreeCancelPolicy(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[var(--farm-olive)] shrink-0" />
+              <span className="text-xs text-[var(--farm-muted)] leading-relaxed">[필수] 환불/청약철회 제한 동의 (신선식품 특성상 단순 변심 반품 불가)</span>
+            </label>
+          </div>
 
           {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
 
@@ -440,5 +469,17 @@ export default function OrderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+        <div className="text-center text-[var(--farm-muted)]">주문 페이지 로딩 중...</div>
+      </div>
+    }>
+      <OrderContent />
+    </Suspense>
   );
 }

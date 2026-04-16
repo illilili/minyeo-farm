@@ -20,6 +20,7 @@ type Product = {
   status: ProductStatus;
   thumbnailUrl?: string;
   description?: string;
+  featured?: boolean;
 };
 
 type ProductForm = {
@@ -53,33 +54,26 @@ export default function AdminProductsPage() {
   async function refresh() {
     const data = await apiGet<Product[]>("/api/admin/products");
     setProducts(data);
+    setFeaturedIds(data.filter((p) => p.featured).map((p) => p.id));
   }
 
   useEffect(() => {
     refresh().catch((e: Error) => setError(e.message));
-    try {
-      const stored = localStorage.getItem("featuredProductIds");
-      if (stored) setFeaturedIds(JSON.parse(stored) as number[]);
-    } catch { /* ignore */ }
   }, []);
 
-  function saveFeaturedIds(ids: number[]) {
-    localStorage.setItem("featuredProductIds", JSON.stringify(ids));
-    setFeaturedIds(ids);
+  function updateFeaturedIds(products: Product[]) {
+    setFeaturedIds(products.filter((p) => p.featured).map((p) => p.id));
   }
 
-  function toggleFeatured(id: number) {
-    if (featuredIds.includes(id)) {
-      saveFeaturedIds(featuredIds.filter((x) => x !== id));
-      setMessage("홈 표시에서 제거했습니다.");
-    } else {
-      if (featuredIds.length >= MAX_FEATURED) {
-        setError(`홈 표시 상품은 최대 ${MAX_FEATURED}개까지 선택할 수 있습니다.`);
-        return;
-      }
-      saveFeaturedIds([...featuredIds, id]);
-      setMessage("홈에 표시할 상품으로 추가했습니다.");
-    }
+  async function toggleFeatured(id: number) {
+    setMessage(""); setError("");
+    try {
+      await apiPatch(`/api/admin/products/${id}/featured`, {});
+      const data = await apiGet<Product[]>("/api/admin/products");
+      setProducts(data);
+      updateFeaturedIds(data);
+      setMessage(featuredIds.includes(id) ? "홈 표시에서 제거했습니다." : "홈에 표시할 상품으로 추가했습니다.");
+    } catch (e) { setError(e instanceof Error ? e.message : "홈 표시 변경에 실패했습니다."); }
   }
 
   function startEdit(product: Product) {

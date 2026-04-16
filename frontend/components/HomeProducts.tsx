@@ -41,17 +41,25 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function HomeProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [featuredIds, setFeaturedIds] = useState<number[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("featuredProductIds");
-      if (stored) setFeaturedIds(JSON.parse(stored) as number[]);
-    } catch { /* ignore */ }
-
-    apiGet<ProductPage>("/api/products?page=0&size=20&sort=createdAt,DESC")
-      .then((data) => setProducts(data.content))
-      .catch(() => setProducts([]));
+    // 서버에서 관리자가 지정한 홈 표시 상품 조회
+    apiGet<Product[]>("/api/products/featured")
+      .then((featured) => {
+        if (featured.length > 0) {
+          setProducts(featured.slice(0, 3));
+        } else {
+          // featured 없으면 최신 상품 3개 폴백
+          apiGet<ProductPage>("/api/products?page=0&size=3&sort=createdAt,DESC")
+            .then((data) => setProducts(data.content))
+            .catch(() => setProducts([]));
+        }
+      })
+      .catch(() => {
+        apiGet<ProductPage>("/api/products?page=0&size=3&sort=createdAt,DESC")
+          .then((data) => setProducts(data.content))
+          .catch(() => setProducts([]));
+      });
   }, []);
 
   if (products.length === 0) {
@@ -64,18 +72,9 @@ export default function HomeProducts() {
     );
   }
 
-  // 지정된 상품 순서대로, 없으면 최신순으로 최대 3개
-  const featured = featuredIds
-    .map((id) => products.find((p) => p.id === id))
-    .filter((p): p is Product => !!p);
-
-  const displayed = featured.length > 0
-    ? featured.slice(0, 3)
-    : products.slice(0, 3);
-
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      {displayed.map((product) => (
+      {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>

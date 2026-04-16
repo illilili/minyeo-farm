@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiPost } from "@/lib/api";
+import { apiDelete, apiPost } from "@/lib/api";
+import { removeGuestCartItem } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
 
 type PaymentResponse = {
@@ -12,7 +13,7 @@ type PaymentResponse = {
   status: "READY" | "APPROVED" | "FAILED" | "CANCELED";
 };
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const hasRequested = useRef(false);
   const [result, setResult] = useState<PaymentResponse | null>(null);
@@ -30,7 +31,18 @@ export default function PaymentSuccessPage() {
     if (!paymentKey || !orderId || Number.isNaN(amount)) { setError("결제 승인 파라미터가 올바르지 않습니다."); return; }
     hasRequested.current = true;
     apiPost<PaymentResponse>("/api/payments/toss/confirm", { paymentKey, orderId, amount })
-      .then(setResult)
+      .then((res) => {
+        setResult(res);
+        const raw = sessionStorage.getItem("pendingCartClear");
+        if (raw) {
+          const items = JSON.parse(raw) as { productId: number }[];
+          const hasToken = !!localStorage.getItem("accessToken");
+          if (hasToken) items.forEach((item) => apiDelete(`/api/my/cart/${item.productId}`).catch(() => {}));
+          else items.forEach((item) => removeGuestCartItem(item.productId));
+          sessionStorage.removeItem("pendingCartClear");
+          sessionStorage.removeItem("checkoutDraft");
+        }
+      })
       .catch((e: Error) => setError(e.message || "결제 승인에 실패했습니다."));
   }, [amount, orderId, paymentKey]);
 
@@ -73,5 +85,18 @@ export default function PaymentSuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <div className="text-5xl animate-pulse">🌿</div>
+        <p className="text-[var(--farm-muted)]">로딩 중...</p>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

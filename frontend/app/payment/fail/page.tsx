@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default function PaymentFailPage() {
+function PaymentFailContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const message = searchParams.get("message");
@@ -37,5 +38,18 @@ export default function PaymentFailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentFailPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <div className="text-5xl animate-pulse">🌿</div>
+        <p className="text-[var(--farm-muted)]">로딩 중...</p>
+      </div>
+    }>
+      <PaymentFailContent />
+    </Suspense>
   );
 }
