@@ -183,12 +183,13 @@ export default function SiteHeader() {
                 </Button>
               </div>
             ) : (
-              <Button
-                asChild
-                className="w-full bg-[var(--farm-fig)] hover:bg-[var(--farm-fig-dark)] text-white"
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="w-full block text-center py-2.5 rounded-lg bg-[var(--farm-fig)] hover:bg-[var(--farm-fig-dark)] text-white font-medium transition-colors"
               >
-                <Link href="/login" onClick={() => setOpen(false)}>로그인</Link>
-              </Button>
+                로그인
+              </Link>
             )}
           </SheetContent>
         </Sheet>
