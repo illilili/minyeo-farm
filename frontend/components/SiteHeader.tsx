@@ -186,7 +186,8 @@ export default function SiteHeader() {
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="w-full block text-center py-2.5 rounded-lg bg-[var(--farm-fig)] hover:bg-[var(--farm-fig-dark)] text-white font-medium transition-colors"
+                style={{ color: "#ffffff" }}
+                className="w-full block text-center py-2.5 rounded-lg bg-[var(--farm-fig)] hover:bg-[var(--farm-fig-dark)] font-medium transition-colors"
               >
                 로그인
               </Link>
